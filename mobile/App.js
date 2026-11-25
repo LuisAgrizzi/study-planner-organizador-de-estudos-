@@ -36,21 +36,39 @@ export default function App() {
   // Guarda o aviso quando algum campo obrigatório estiver vazio
   const [formError, setFormError] = useState('');
   const [taskFilter, setTaskFilter] = useState('all');
-  // Adiciona a tarefa se os campos estiverem preenchidos, limpa e fecha o formulário
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  // Adiciona ou atualiza a tarefa, depois limpa e fecha o formulário
   const handleAddTask = () => {
     if (newTaskName && newTaskSubject && newTaskDate) {
       setFormError('');
-      const newTask = {
-        id: (Date.now().toString()),
-        name: newTaskName,
-        subject: newTaskSubject,
-        date: newTaskDate,
-        completed: false,
-      };
-      setTaskList([...taskList, newTask]);
+      if (editingTaskId) {
+        setTaskList((currentTasks) =>
+          currentTasks.map((task) =>
+            task.id === editingTaskId
+              ? {
+                ...task,
+                name: newTaskName,
+                subject: newTaskSubject,
+                date: newTaskDate,
+              }
+              : task
+          )
+        );
+      } else {
+        const newTask = {
+          id: Date.now().toString(),
+          name: newTaskName,
+          subject: newTaskSubject,
+          date: newTaskDate,
+          completed: false,
+        };
+        setTaskList((currentTasks) => [...currentTasks, newTask]);
+      }
+
       setNewTaskName('');
       setNewTaskSubject('');
       setNewTaskDate('');
+      setEditingTaskId(null);
       setShowForm(false);
     }
     else {
@@ -62,15 +80,23 @@ export default function App() {
       currentTasks.filter((task) => task.id !== taskId)
     );
   };
+  const handleEditTask = (task) => {
+    setNewTaskName(task.name);
+    setNewTaskSubject(task.subject);
+    setNewTaskDate(task.date);
+    setEditingTaskId(task.id);
+    setFormError('');
+    setShowForm(true);
+  };
   // Conta as tarefas cuja data foi digitada exatamente como "Hoje"
   const taskTodayCount = taskList.filter(task => task.date === 'Hoje').length;
   // Cria uma lista de matérias sem nomes repetidos
   const subjectList = [...new Set(taskList.map((task) => task.subject))];
   const filteredTasks = taskList.filter((task) => {
-  if (taskFilter === 'pending') return !task.completed;
-  if (taskFilter === 'completed') return task.completed;
-  return true;
-});
+    if (taskFilter === 'pending') return !task.completed;
+    if (taskFilter === 'completed') return task.completed;
+    return true;
+  });
   return (
     // Área rolável que contém o conteúdo da tela
     <ScrollView contentContainerStyle={styles.container}>
@@ -134,7 +160,9 @@ export default function App() {
           )}
           {/*Botão para salvar a tarefa*/}
           <Pressable style={styles.formButton} onPress={handleAddTask}>
-            <Text style={styles.formButtonText}>Salvar tarefa</Text>
+            <Text style={styles.formButtonText}>
+              {editingTaskId ? 'Atualizar tarefa' : 'Salvar tarefa'}
+            </Text>
           </Pressable>
         </View>
       )}
@@ -218,11 +246,17 @@ export default function App() {
               {task.subject} - {task.date}
             </Text>
             <Pressable
-            style={styles.deleteButton}
-            onPress={() => handleDeleteTask(task.id)}
-          >
-            <Text style={styles.deleteButtonText}>Excluir</Text>
-          </Pressable>
+              style={styles.editButton}
+              onPress={() => handleEditTask(task)}
+            >
+              <Text style={styles.editButtonText}>Editar</Text>
+            </Pressable>
+            <Pressable
+              style={styles.deleteButton}
+              onPress={() => handleDeleteTask(task.id)}
+            >
+              <Text style={styles.deleteButtonText}>Excluir</Text>
+            </Pressable>
           </View>
         </View>
       ))}
@@ -324,50 +358,64 @@ const styles = StyleSheet.create({
     marginBottom: 10, // espaço abaixo do texto de erro
   },
   // Organiza os botões de filtro em uma linha
-filterRow: {
-  width: '90%',
-  maxWidth: 520,
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginBottom: 12,
-},
-// Aparência de cada botão de filtro
-filterButton: {
-  width: '32%',
-  padding: 10,
-  borderRadius: 12,
-  backgroundColor: '#E7EFE8',
-  alignItems: 'center',
-},
-// Fundo do filtro selecionado
-filterButtonActive: {
-  backgroundColor: '#466C52',
-},
-// Texto normal dos filtros
-filterButtonText: {
-  color: '#466C52',
-  fontSize: 14,
-  fontWeight: '700',
-},
-// Texto branco do filtro selecionado
-filterButtonTextActive: {
-  color: '#FFFFFF',
-},
-// Aparência do botão de exclusão da tarefa
-deleteButton: {
-  marginTop: 8,
-  backgroundColor: '#B42318', // cor de fundo vermelha
-  alignSelf: 'flex-end', // alinha o botão à direita
-  paddingVertical: 6, // espaço interno vertical
-  paddingHorizontal: 12, // espaço interno horizontal
-  borderRadius: 8, // cantos arredondados
-},
-// Aparência do texto dentro do botão de exclusão
-deleteButtonText: {
-  color: '#FFFFFF', // cor do texto branca
-  fontSize: 14, // tamanho da letra
-  fontWeight: '700', // deixa em negrito
-},
+  filterRow: {
+    width: '90%',
+    maxWidth: 520,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  // Aparência de cada botão de filtro
+  filterButton: {
+    width: '32%',
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: '#E7EFE8',
+    alignItems: 'center',
+  },
+  // Fundo do filtro selecionado
+  filterButtonActive: {
+    backgroundColor: '#466C52',
+  },
+  // Texto normal dos filtros
+  filterButtonText: {
+    color: '#466C52',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Texto branco do filtro selecionado
+  filterButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  // Aparência do botão para editar a tarefa
+  editButton: {
+    marginTop: 8,
+    backgroundColor: '#466C52',
+    alignSelf: 'flex-end',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  editButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Aparência do botão de exclusão da tarefa
+  deleteButton: {
+    marginTop: 8,
+    backgroundColor: '#B42318', // cor de fundo vermelha
+    alignSelf: 'flex-end', // alinha o botão à direita
+    paddingVertical: 6, // espaço interno vertical
+    paddingHorizontal: 12, // espaço interno horizontal
+    borderRadius: 8, // cantos arredondados
+  },
+  // Aparência do texto dentro do botão de exclusão
+  deleteButtonText: {
+    color: '#FFFFFF', // cor do texto branca
+    fontSize: 14, // tamanho da letra
+    fontWeight: '700', // deixa em negrito
+  },
 
   // Aparência da caixa de tarefa
   taskCard: {
