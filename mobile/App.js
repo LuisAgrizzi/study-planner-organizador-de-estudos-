@@ -4,10 +4,10 @@ import { StatusBar } from 'expo-status-bar';
 // Importa a ferramenta para guardar e atualizar informações no app
 import { useState } from 'react';
 
-// Importa ferramentas para criar estilos e elementos visuais
+// Importa componentes da tela, campos de texto e ferramentas de estilo
 import { TextInput, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-// Lista de tarefas
+// Tarefas de exemplo exibidas quando o aplicativo é aberto
 const tasks = [
   {
     id: '1',
@@ -33,11 +33,15 @@ export default function App() {
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskSubject, setNewTaskSubject] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
-  // Verifica os campos, adiciona a tarefa à lista e fecha o formulário
+  // Guarda o aviso quando algum campo obrigatório estiver vazio
+  const [formError, setFormError] = useState('');
+  const [taskFilter, setTaskFilter] = useState('all');
+  // Adiciona a tarefa se os campos estiverem preenchidos, limpa e fecha o formulário
   const handleAddTask = () => {
     if (newTaskName && newTaskSubject && newTaskDate) {
+      setFormError('');
       const newTask = {
-        id: (taskList.length + 1).toString(),
+        id: (Date.now().toString()),
         name: newTaskName,
         subject: newTaskSubject,
         date: newTaskDate,
@@ -49,9 +53,26 @@ export default function App() {
       setNewTaskDate('');
       setShowForm(false);
     }
+    else {
+      setFormError('Por favor, preencha todos os campos.');
+    }
   };
+  const handleDeleteTask = (taskId) => {
+    setTaskList((currentTasks) =>
+      currentTasks.filter((task) => task.id !== taskId)
+    );
+  };
+  // Conta as tarefas cuja data foi digitada exatamente como "Hoje"
+  const taskTodayCount = taskList.filter(task => task.date === 'Hoje').length;
+  // Cria uma lista de matérias sem nomes repetidos
+  const subjectList = [...new Set(taskList.map((task) => task.subject))];
+  const filteredTasks = taskList.filter((task) => {
+  if (taskFilter === 'pending') return !task.completed;
+  if (taskFilter === 'completed') return task.completed;
+  return true;
+});
   return (
-    // Caixa principal da tela, usando o estilo "container"
+    // Área rolável que contém o conteúdo da tela
     <ScrollView contentContainerStyle={styles.container}>
 
       {/* Título do aplicativo */}
@@ -61,52 +82,119 @@ export default function App() {
         {/* Explica o que o número representa */}
         <Text style={styles.summaryLabel}>Tarefas para hoje</Text>
         {/* Mostra o número de tarefas */}
-        <Text style={styles.summaryNumber}>1 tarefa</Text>
+        <Text style={styles.summaryNumber}>
+          {taskTodayCount} {taskTodayCount === 1 ? 'tarefa' : 'tarefas'}
+        </Text>
       </View>
 
-      {/* Título da próxima seção da tela */}
+      {/* Título da seção de matérias */}
       <Text style={styles.sectionTitle}>Minhas matérias</Text>
       {/* Caixa para cada matéria */}
-      <View style={styles.subjectCard}>
-        {/* Nome da matéria */}
-        <Text style={styles.subjectName}>Matemática</Text>
-        {/* Resumo das tarefas da matéria */}
-        <Text style={styles.subjectInfo}>1 tarefa pendente</Text>
-      </View>
+      {subjectList.map((subject) => {
+        // Conta as tarefas desta matéria que ainda estão pendentes
+        const pendingCount = taskList.filter(
+          (task) => task.subject === subject && !task.completed
+        ).length;
+
+        return (
+          <View key={subject} style={styles.subjectCard}>
+            <Text style={styles.subjectName}>{subject}</Text>
+            <Text style={styles.subjectInfo}>Pendentes: {pendingCount}</Text>
+          </View>
+        );
+      })}
 
       {/* Título da lista de tarefas */}
       <Text style={styles.sectionTitle}>Próximas tarefas</Text>
 
       {/* Botão para abrir ou fechar o formulário */}
-      <Pressable onPress={() => setShowForm(!showForm)}>
-        <Text>Adicionar tarefa</Text>
+      <Pressable style={styles.formButton} onPress={() => setShowForm(!showForm)}>
+        <Text style={styles.formButtonText}>Adicionar tarefa</Text>
       </Pressable>
-      {/* O campo aparece apenas quando showForm é verdadeiro */}
+      {/* Exibe os três campos quando o formulário está aberto */}
       {showForm && (
         <View>
-          <TextInput
+          <TextInput style={styles.taskInput}
             placeholder="Digite o nome da nova tarefa"
             value={newTaskName}
             onChangeText={setNewTaskName}
           />
-          <TextInput
+          <TextInput style={styles.taskInput}
             placeholder="Matéria"
             value={newTaskSubject}
             onChangeText={setNewTaskSubject}
           />
-          <TextInput
+          <TextInput style={styles.taskInput}
             placeholder="Data"
             value={newTaskDate}
             onChangeText={setNewTaskDate}
           />
-          <Pressable onPress={handleAddTask}>
-            <Text>Salvar tarefa</Text>
+          {formError !== '' && (
+            <Text style={styles.formErrorText}>{formError}</Text>
+          )}
+          {/*Botão para salvar a tarefa*/}
+          <Pressable style={styles.formButton} onPress={handleAddTask}>
+            <Text style={styles.formButtonText}>Salvar tarefa</Text>
           </Pressable>
         </View>
       )}
 
+      {/* Filtros das tarefas */}
+      <View style={styles.filterRow}>
+        <Pressable
+          style={[
+            styles.filterButton,
+            taskFilter === 'all' && styles.filterButtonActive,
+          ]}
+          onPress={() => setTaskFilter('all')}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              taskFilter === 'all' && styles.filterButtonTextActive,
+            ]}
+          >
+            Todas
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.filterButton,
+            taskFilter === 'pending' && styles.filterButtonActive,
+          ]}
+          onPress={() => setTaskFilter('pending')}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              taskFilter === 'pending' && styles.filterButtonTextActive,
+            ]}
+          >
+            Pendentes
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.filterButton,
+            taskFilter === 'completed' && styles.filterButtonActive,
+          ]}
+          onPress={() => setTaskFilter('completed')}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              taskFilter === 'completed' && styles.filterButtonTextActive,
+            ]}
+          >
+            Concluídas
+          </Text>
+        </Pressable>
+      </View>
+
       {/* Lista de tarefas */}
-      {taskList.map((task) => (
+      {filteredTasks.map((task) => (
         <View key={task.id} style={styles.taskCard}>
           <Pressable
             style={[styles.taskCheck, task.completed && styles.taskCheckCompleted]}
@@ -129,11 +217,17 @@ export default function App() {
             <Text style={styles.taskMeta}>
               {task.subject} - {task.date}
             </Text>
+            <Pressable
+            style={styles.deleteButton}
+            onPress={() => handleDeleteTask(task.id)}
+          >
+            <Text style={styles.deleteButtonText}>Excluir</Text>
+          </Pressable>
           </View>
         </View>
       ))}
 
-      {/* Aparência da barra superior do celular */}
+      {/* Configura a aparência da barra de status do celular */}
       <StatusBar style="auto" />
     </ScrollView>
   );
@@ -175,11 +269,11 @@ const styles = StyleSheet.create({
     marginTop: 28, // espaço acima do título
     marginBottom: 12, //  espaço abaixo do título
   },
-  // Aparência da caixa de cada matéria
+  // Aparência do cartão de cada matéria
   subjectCard: {
     width: '90%', // ocupa 90% da largura disponível
     maxWidth: 520, // limita a largura em telas grandes
-    backgroundColor: '#FFFFFF', // cor de fundo branco
+    backgroundColor: '#FFFFFF', // cor de fundo branca
     borderRadius: 16, // cantos arredondados
     padding: 16, // espaço interno da caixa
     marginBottom: 8, // espaço abaixo da caixa
@@ -190,12 +284,91 @@ const styles = StyleSheet.create({
     fontSize: 18, //tamanho da letra
     fontWeight: '700', //deixa em negrito
   },
-  // Aparência do resumo das matéria
+  // Aparência da contagem de tarefas pendentes da matéria
   subjectInfo: {
     color: '#777A72', // cor do texto
     fontSize: 14, // tamanho da letra
     marginTop: 6, // espaço acima do texto
   },
+  // Aparência do campo de entrada de nova tarefa
+  taskInput: {
+    width: '90%', // ocupa 90% da largura disponível
+    maxWidth: 520, // limita a largura em telas grandes
+    backgroundColor: '#FFFFFF', // cor de fundo branca
+    borderWidth: 1, // espessura da borda
+    borderColor: '#D8DDD8', // cor da borda
+    borderRadius: 16, // cantos arredondados
+    padding: 14, // espaço interno da caixa
+    marginBottom: 10, // espaço abaixo da caixa 
+
+  },
+  // Aparência dos botões do formulário
+  formButton: {
+    backgroundColor: '#466C52', // cor de fundo verde
+    width: '90%', // ocupa 90% da largura disponível
+    maxWidth: 520, // limita a largura em telas grandes
+    borderRadius: 16, // cantos arredondados
+    padding: 14, // espaço interno da caixa
+    marginBottom: 10, // espaço abaixo da caixa
+    alignItems: 'center', // centraliza o conteúdo horizontalmente
+  },
+  // Aparência do texto dentro dos botões do formulário
+  formButtonText: {
+    color: '#FFFFFF', // cor do texto
+    fontSize: 16, // tamanho da letra
+    fontWeight: '700', // deixa em negrito
+  },
+  formErrorText: {
+    color: '#FF0000', // cor do texto vermelho para indicar erro
+    fontSize: 14, // tamanho da letra
+    marginBottom: 10, // espaço abaixo do texto de erro
+  },
+  // Organiza os botões de filtro em uma linha
+filterRow: {
+  width: '90%',
+  maxWidth: 520,
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 12,
+},
+// Aparência de cada botão de filtro
+filterButton: {
+  width: '32%',
+  padding: 10,
+  borderRadius: 12,
+  backgroundColor: '#E7EFE8',
+  alignItems: 'center',
+},
+// Fundo do filtro selecionado
+filterButtonActive: {
+  backgroundColor: '#466C52',
+},
+// Texto normal dos filtros
+filterButtonText: {
+  color: '#466C52',
+  fontSize: 14,
+  fontWeight: '700',
+},
+// Texto branco do filtro selecionado
+filterButtonTextActive: {
+  color: '#FFFFFF',
+},
+// Aparência do botão de exclusão da tarefa
+deleteButton: {
+  marginTop: 8,
+  backgroundColor: '#B42318', // cor de fundo vermelha
+  alignSelf: 'flex-end', // alinha o botão à direita
+  paddingVertical: 6, // espaço interno vertical
+  paddingHorizontal: 12, // espaço interno horizontal
+  borderRadius: 8, // cantos arredondados
+},
+// Aparência do texto dentro do botão de exclusão
+deleteButtonText: {
+  color: '#FFFFFF', // cor do texto branca
+  fontSize: 14, // tamanho da letra
+  fontWeight: '700', // deixa em negrito
+},
+
   // Aparência da caixa de tarefa
   taskCard: {
     width: '90%', // ocupa 90% da largura disponível
@@ -222,7 +395,7 @@ const styles = StyleSheet.create({
     color: '#777A72',
     textDecorationLine: 'line-through',
   },
-  // Aparência da matéria da tarefa
+  // Aparência do texto com a matéria e a data da tarefa
   taskMeta: {
     color: '#777A72', // cor do texto
     fontSize: 14, // tamanho da letra
@@ -249,9 +422,9 @@ const styles = StyleSheet.create({
     fontSize: 14, // tamanho da letra
     fontWeight: '700', // deixa em negrito
   },
-  // Aparência do contêiner principal
+  // Aparência do conteúdo dentro da tela rolável
   container: {
-    flexGrow: 1, // ocupa toda a tela
+    flexGrow: 1, // preenche a tela e cresce com o conteúdo
     backgroundColor: '#fff', // cor de fundo branca
     paddingTop: 40, //espaço acima do conteúdo
     paddingBottom: 32, // espaço depois do conteúdo
