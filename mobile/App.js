@@ -70,10 +70,12 @@ export default function App() {
               );
             }}
           >
-          { task.completed && (<Text style={styles.taskCheckText}>✓</Text>) }
+            {task.completed && (<Text style={styles.taskCheckText}>✓</Text>)}
           </Pressable>
           <View style={styles.taskInfo}>
-            <Text style={styles.taskName}>{task.name}</Text>
+            <Text style={[styles.taskName, task.completed && styles.taskNameCompleted]}>
+              {task.name}
+            </Text>
             <Text style={styles.taskMeta}>
               {task.subject} - {task.date}
             </Text>
@@ -165,6 +167,11 @@ const styles = StyleSheet.create({
     fontSize: 16, // tamanho da letra
     fontWeight: '700', // deixa em negrito
   },
+  // Aparência do nome quando a tarefa está concluída
+  taskNameCompleted: {
+    color: '#777A72',
+    textDecorationLine: 'line-through',
+  },
   // Aparência da matéria da tarefa
   taskMeta: {
     color: '#777A72', // cor do texto
@@ -187,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#466C52', // cor de fundo verde quando concluído
   },
   // Aparência do texto de verificação
-  taskCheckText:{
+  taskCheckText: {
     color: '#ffffff', // cor do texto
     fontSize: 14, // tamanho da letra
     fontWeight: '700', // deixa em negrito
