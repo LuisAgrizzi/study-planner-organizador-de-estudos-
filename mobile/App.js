@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 
 // Importa ferramentas para criar estilos e elementos visuais
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { TextInput, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 // Lista de tarefas
 const tasks = [
@@ -28,6 +28,28 @@ const tasks = [
 export default function App() {
   // Guarda a lista de tarefas e permite atualizá-la
   const [taskList, setTaskList] = useState(tasks);
+  // Controla se o formulário de nova tarefa aparece na tela
+  const [showForm, setShowForm] = useState(false);
+  const [newTaskName, setNewTaskName] = useState('');
+  const [newTaskSubject, setNewTaskSubject] = useState('');
+  const [newTaskDate, setNewTaskDate] = useState('');
+  // Verifica os campos, adiciona a tarefa à lista e fecha o formulário
+  const handleAddTask = () => {
+    if (newTaskName && newTaskSubject && newTaskDate) {
+      const newTask = {
+        id: (taskList.length + 1).toString(),
+        name: newTaskName,
+        subject: newTaskSubject,
+        date: newTaskDate,
+        completed: false,
+      };
+      setTaskList([...taskList, newTask]);
+      setNewTaskName('');
+      setNewTaskSubject('');
+      setNewTaskDate('');
+      setShowForm(false);
+    }
+  };
   return (
     // Caixa principal da tela, usando o estilo "container"
     <ScrollView contentContainerStyle={styles.container}>
@@ -54,6 +76,34 @@ export default function App() {
 
       {/* Título da lista de tarefas */}
       <Text style={styles.sectionTitle}>Próximas tarefas</Text>
+
+      {/* Botão para abrir ou fechar o formulário */}
+      <Pressable onPress={() => setShowForm(!showForm)}>
+        <Text>Adicionar tarefa</Text>
+      </Pressable>
+      {/* O campo aparece apenas quando showForm é verdadeiro */}
+      {showForm && (
+        <View>
+          <TextInput
+            placeholder="Digite o nome da nova tarefa"
+            value={newTaskName}
+            onChangeText={setNewTaskName}
+          />
+          <TextInput
+            placeholder="Matéria"
+            value={newTaskSubject}
+            onChangeText={setNewTaskSubject}
+          />
+          <TextInput
+            placeholder="Data"
+            value={newTaskDate}
+            onChangeText={setNewTaskDate}
+          />
+          <Pressable onPress={handleAddTask}>
+            <Text>Salvar tarefa</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Lista de tarefas */}
       {taskList.map((task) => (
