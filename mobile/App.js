@@ -1,14 +1,36 @@
 // Importa o controle da barra superior do celular
 import { StatusBar } from 'expo-status-bar';
 
-// Importa ferramentas para criar estilos e elementos visuais
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+// Importa a ferramenta para guardar e atualizar informações no app
+import { useState } from 'react';
 
+// Importa ferramentas para criar estilos e elementos visuais
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+// Lista de tarefas
+const tasks = [
+  {
+    id: '1',
+    name: 'Lista de exercícios - funções',
+    subject: 'Matemática',
+    date: 'Hoje',
+    completed: false,
+  },
+  {
+    id: '2',
+    name: 'Revisar capítulo 3',
+    subject: 'Biologia',
+    date: 'Amanhã',
+    completed: false,
+  },
+];
 // Componente principal: monta a tela do aplicativo
 export default function App() {
+  // Guarda a lista de tarefas e permite atualizá-la
+  const [taskList, setTaskList] = useState(tasks);
   return (
     // Caixa principal da tela, usando o estilo "container"
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
 
       {/* Título do aplicativo */}
       <Text style={styles.title}>Organizador de estudos!</Text>
@@ -17,7 +39,7 @@ export default function App() {
         {/* Explica o que o número representa */}
         <Text style={styles.summaryLabel}>Tarefas para hoje</Text>
         {/* Mostra o número de tarefas */}
-        <Text style={styles.summaryNumber}>3 tarefas</Text>
+        <Text style={styles.summaryNumber}>1 tarefa</Text>
       </View>
 
       {/* Título da próxima seção da tela */}
@@ -27,26 +49,41 @@ export default function App() {
         {/* Nome da matéria */}
         <Text style={styles.subjectName}>Matemática</Text>
         {/* Resumo das tarefas da matéria */}
-        <Text style={styles.subjectInfo}>3 tarefas pendentes</Text>
+        <Text style={styles.subjectInfo}>1 tarefa pendente</Text>
       </View>
 
       {/* Título da lista de tarefas */}
       <Text style={styles.sectionTitle}>Próximas tarefas</Text>
-      {/* Cartão de uma tarefa */}
-      <View style={styles.taskCard}>
-        {/* Círculo visual para indicar que ainda não foi concluida */}
-        <View style={styles.taskCheck} />
-        {/* Agrupa o nome e a matéria da tarefa */}
-        <View style={styles.taskInfo}>
-          <Text style={styles.taskName}>Lista de exercício - funções</Text>
-          <Text style={styles.taskMeta}>Matemática - Hoje</Text>
-        </View>
-      </View>
 
+      {/* Lista de tarefas */}
+      {taskList.map((task) => (
+        <View key={task.id} style={styles.taskCard}>
+          <Pressable
+            style={[styles.taskCheck, task.completed && styles.taskCheckCompleted]}
+            onPress={() => {
+              setTaskList((currentTasks) =>
+                currentTasks.map((item) =>
+                  item.id === task.id
+                    ? { ...item, completed: !item.completed }
+                    : item
+                )
+              );
+            }}
+          >
+          { task.completed && (<Text style={styles.taskCheckText}>✓</Text>) }
+          </Pressable>
+          <View style={styles.taskInfo}>
+            <Text style={styles.taskName}>{task.name}</Text>
+            <Text style={styles.taskMeta}>
+              {task.subject} - {task.date}
+            </Text>
+          </View>
+        </View>
+      ))}
 
       {/* Aparência da barra superior do celular */}
       <StatusBar style="auto" />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -90,7 +127,7 @@ const styles = StyleSheet.create({
   subjectCard: {
     width: '90%', // ocupa 90% da largura disponível
     maxWidth: 520, // limita a largura em telas grandes
-    backgroundColor: '#FFFFFF', // cor de fundo verde claro
+    backgroundColor: '#FFFFFF', // cor de fundo branco
     borderRadius: 16, // cantos arredondados
     padding: 16, // espaço interno da caixa
     marginBottom: 8, // espaço abaixo da caixa
@@ -142,12 +179,26 @@ const styles = StyleSheet.create({
     borderWidth: 2, // espessura da borda
     borderColor: '#466C52', // cor da borda
     marginRight: 12, // espaço à direita do círculo
+    alignItems: 'center', // centraliza o conteúdo horizontalmente
+    justifyContent: 'center', // centraliza o conteúdo verticalmente
+  },
+  // Aparência do círculo de verificação quando a tarefa está concluída
+  taskCheckCompleted: {
+    backgroundColor: '#466C52', // cor de fundo verde quando concluído
+  },
+  // Aparência do texto de verificação
+  taskCheckText:{
+    color: '#ffffff', // cor do texto
+    fontSize: 14, // tamanho da letra
+    fontWeight: '700', // deixa em negrito
   },
   // Aparência do contêiner principal
   container: {
-    flex: 1, // ocupa toda a tela
+    flexGrow: 1, // ocupa toda a tela
     backgroundColor: '#fff', // cor de fundo branca
+    paddingTop: 40, //espaço acima do conteúdo
+    paddingBottom: 32, // espaço depois do conteúdo
     alignItems: 'center', // centraliza o conteúdo horizontalmente
-    justifyContent: 'center', // centraliza o conteúdo verticalmente
+    justifyContent: 'flex-start', // começa o conteúdo no topo
   },
 });
