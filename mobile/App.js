@@ -406,18 +406,20 @@ export default function App() {
             <Text style={styles.taskMeta}>
               {task.subject} - {task.date}
             </Text>
-            <Pressable
-              style={styles.editButton}
-              onPress={() => handleEditTask(task)}
-            >
-              <Text style={styles.editButtonText}>Editar</Text>
-            </Pressable>
-            <Pressable
-              style={styles.deleteButton}
-              onPress={() => handleDeleteTask(task.id)}
-            >
-              <Text style={styles.deleteButtonText}>Excluir</Text>
-            </Pressable>
+            <View style={styles.taskActions}>
+              <Pressable
+                style={styles.editButton}
+                onPress={() => handleEditTask(task)}
+              >
+                <Text style={styles.editButtonText}>Editar</Text>
+              </Pressable>
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => handleDeleteTask(task.id)}
+              >
+                <Text style={styles.deleteButtonText}>Excluir</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       ))}
@@ -469,9 +471,11 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 520,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DCE4DC',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   // Aparência do nome da matéria
   subjectName: {
@@ -655,12 +659,11 @@ const styles = StyleSheet.create({
   },
   // Aparência do botão para editar a tarefa
   editButton: {
-    marginTop: 8,
     backgroundColor: '#466C52',
-    alignSelf: 'flex-end',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
+    marginRight: 8,
   },
   editButtonText: {
     color: '#FFFFFF',
@@ -669,12 +672,16 @@ const styles = StyleSheet.create({
   },
   // Aparência do botão de exclusão da tarefa
   deleteButton: {
-    marginTop: 8,
     backgroundColor: '#B42318',
-    alignSelf: 'flex-end',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
+  },
+  // Mantém as ações da tarefa juntas em uma linha
+  taskActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
   },
   // Aparência do texto dentro do botão de exclusão
   deleteButtonText: {
@@ -688,9 +695,11 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 520,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DCE4DC',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 8,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -739,7 +748,7 @@ const styles = StyleSheet.create({
   // Aparência do conteúdo dentro da tela rolável
   container: {
     flexGrow: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F7F4',
     paddingTop: 40,
     paddingBottom: 32,
     alignItems: 'center',
