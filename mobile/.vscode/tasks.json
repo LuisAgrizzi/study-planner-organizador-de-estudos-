@@ -1,0 +1,30 @@
+
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Iniciar Organizador de Estudos",
+      "type": "shell",expo start --web
+      
+      "command": "npx",
+      "args": [
+        "expo",
+        "start",
+        "--web"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    }
+  ]
+}

@@ -5,14 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 
 // Importa os componentes usados para montar e estilizar a tela
-import {
-  TextInput,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 // Tarefas de exemplo exibidas quando o aplicativo é aberto
 const tasks = [
@@ -42,6 +35,8 @@ const formatTaskDate = (date) => {
 
 // Componente principal do aplicativo
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isWideScreen = width >= 1024;
   // Dados da lista e do formulário de tarefas
   const [taskList, setTaskList] = useState(tasks);
   const [showForm, setShowForm] = useState(false);
@@ -114,6 +109,16 @@ export default function App() {
     );
   };
 
+  // Limpa o formulário e sai do modo de edição
+  const handleCancelForm = () => {
+    setNewTaskName('');
+    setNewTaskSubject('');
+    setNewTaskDate('');
+    setFormError('');
+    setEditingTaskId(null);
+    setShowForm(false);
+  };
+
   // Carrega os dados da tarefa selecionada no formulário
   const handleEditTask = (task) => {
     setNewTaskName(task.name);
@@ -137,6 +142,7 @@ export default function App() {
   ).length;
   // Lista as matérias sem repetir nomes
   const subjectList = [...new Set(taskList.map((task) => task.subject))];
+  const pendingTaskCount = taskList.filter((task) => !task.completed).length;
 
   // Aplica o filtro escolhido à lista de tarefas
   const filteredTasks = taskList.filter((task) => {
@@ -148,301 +154,435 @@ export default function App() {
     // Área rolável que contém o conteúdo da tela
     <ScrollView contentContainerStyle={styles.container}>
 
-      {/* Título do aplicativo */}
-      <Text style={styles.title}>Organizador de estudos!</Text>
-      {/* Caixa verde que resume as tarefas do dia */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Tarefas para hoje</Text>
-        <Text style={styles.summaryNumber}>
-          {taskTodayCount} {taskTodayCount === 1 ? 'tarefa' : 'tarefas'}
-        </Text>
-      </View>
+      <View style={styles.pageContent}>
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>ORGANIZADO DE ESTUDOS</Text>
+          <Text style={styles.title}>Organizador de estudos!</Text>
+          <Text style={styles.subtitle}>
+            Acompanhe suas matérias e organize as próximas tarefas.
+          </Text>
+        </View>
 
-      {/* Título da seção de matérias */}
-      <Text style={styles.sectionTitle}>Minhas matérias</Text>
-      {/* Caixa para cada matéria */}
-      {subjectList.map((subject) => {
-        // Conta as tarefas desta matéria que ainda estão pendentes
-        const pendingCount = taskList.filter(
-          (task) => task.subject === subject && !task.completed
-        ).length;
-
-        return (
-          <View key={subject} style={styles.subjectCard}>
-            <Text style={styles.subjectName}>{subject}</Text>
-            <Text style={styles.subjectInfo}>Pendentes: {pendingCount}</Text>
+        <View style={[styles.metricsRow, isWideScreen && styles.metricsRowWide]}>
+          <View style={[styles.metricCard, styles.summaryCard, isWideScreen && styles.metricCardWide]}>
+            <Text style={styles.summaryLabel}>Tarefas para hoje</Text>
+            <Text style={styles.summaryNumber}>
+              {taskTodayCount} {taskTodayCount === 1 ? 'tarefa' : 'tarefas'}
+            </Text>
           </View>
-        );
-      })}
-
-      {/* Título da lista de tarefas */}
-      <Text style={styles.sectionTitle}>Próximas tarefas</Text>
-
-      {/* Botão para abrir ou fechar o formulário */}
-      <Pressable
-        style={styles.formButton}
-        onPress={() => setShowForm(!showForm)}
-      >
-        <Text style={styles.formButtonText}>Adicionar tarefa</Text>
-      </Pressable>
-      {/* Formulário para adicionar ou editar uma tarefa */}
-      {showForm && (
-        <View>
-          <TextInput
-            style={styles.taskInput}
-            placeholder="Digite o nome da nova tarefa"
-            value={newTaskName}
-            onChangeText={setNewTaskName}
-          />
-          <TextInput
-            style={styles.taskInput}
-            placeholder="Matéria"
-            value={newTaskSubject}
-            onChangeText={setNewTaskSubject}
-          />
-          <View style={styles.dateOptions}>
-            <Pressable
-              style={[
-                styles.dateOption,
-                newTaskDate === 'Hoje' && styles.dateOptionSelected,
-              ]}
-              onPress={() => setNewTaskDate('Hoje')}
-            >
-              <Text
-                style={[
-                  styles.dateOptionText,
-                  newTaskDate === 'Hoje' && styles.dateOptionTextSelected,
-                ]}
-              >
-                Hoje
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.dateOption,
-                newTaskDate === 'Amanhã' && styles.dateOptionSelected,
-              ]}
-              onPress={() => setNewTaskDate('Amanhã')}
-            >
-              <Text
-                style={[
-                  styles.dateOptionText,
-                  newTaskDate === 'Amanhã' && styles.dateOptionTextSelected,
-                ]}
-              >
-                Amanhã
-              </Text>
-            </Pressable>
+          <View style={[styles.metricCard, isWideScreen && styles.metricCardWide]}>
+            <Text style={styles.metricLabel}>Matérias</Text>
+            <Text style={styles.metricValue}>{subjectList.length}</Text>
+            <Text style={styles.metricHint}>
+              {subjectList.length === 1 ? 'matéria cadastrada' : 'matérias cadastradas'}
+            </Text>
           </View>
-          <View style={styles.calendar}>
-            <View style={styles.calendarHeader}>
-              <Pressable
-                style={styles.calendarNavButton}
-                onPress={() =>
-                  setCalendarMonth(
-                    new Date(calendarYear, calendarMonthIndex - 1, 1)
-                  )
-                }
-              >
-                <Text style={styles.calendarNavText}>‹</Text>
-              </Pressable>
-              <Text style={styles.calendarMonthText}>
-                {calendarMonth.toLocaleDateString('pt-BR', {
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </Text>
-              <Pressable
-                style={styles.calendarNavButton}
-                onPress={() =>
-                  setCalendarMonth(
-                    new Date(calendarYear, calendarMonthIndex + 1, 1)
-                  )
-                }
-              >
-                <Text style={styles.calendarNavText}>›</Text>
-              </Pressable>
-            </View>
-            <View style={styles.calendarWeekRow}>
-              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                <Text key={day} style={styles.calendarWeekDay}>
-                  {day}
+          <View style={[styles.metricCard, isWideScreen && styles.metricCardWide]}>
+            <Text style={styles.metricLabel}>Tarefas pendentes</Text>
+            <Text style={styles.metricValue}>{pendingTaskCount}</Text>
+            <Text style={styles.metricHint}>A partir da sua lista atual</Text>
+          </View>
+        </View>
+
+        <View style={[styles.dashboardGrid, isWideScreen && styles.dashboardGridWide]}>
+
+          <View style={[styles.subjectsColumn, isWideScreen && styles.subjectsColumnWide]}>
+            {/* Título da seção de matérias */}
+            <Text style={styles.sectionTitle}>Minhas matérias</Text>
+            {/* Caixa para cada matéria */}
+            {subjectList.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateTitle}>Nenhuma matéria cadastrada</Text>
+                <Text style={styles.emptyStateText}>
+                  Adicione uma tarefa para começar.
                 </Text>
-              ))}
-            </View>
-            <View style={styles.calendarGrid}>
-              {calendarDays.map((day) => {
-                const dayDate = formatTaskDate(day);
-                const isSelected = newTaskDate === dayDate;
-                const isOutsideMonth = day.getMonth() !== calendarMonthIndex;
+              </View>
+            ) : (
+              subjectList.map((subject) => {
+                // Conta as tarefas desta matéria que ainda estão pendentes
+                const pendingCount = taskList.filter(
+                  (task) => task.subject === subject && !task.completed
+                ).length;
 
                 return (
+                  <View key={subject} style={styles.subjectCard}>
+                    <Text style={styles.subjectName}>{subject}</Text>
+                    <Text style={styles.subjectInfo}>Pendentes: {pendingCount}</Text>
+                  </View>
+                );
+              })
+            )}
+          </View>
+          <View style={[styles.tasksColumn, isWideScreen && styles.tasksColumnWide]}>
+
+            {/* Título da lista de tarefas */}
+            <Text style={styles.sectionTitle}>Próximas tarefas</Text>
+
+            {/* Botão para abrir ou fechar o formulário */}
+            <Pressable
+              style={styles.formButton}
+              onPress={showForm ? handleCancelForm : () => setShowForm(true)}
+            >
+              <Text style={styles.formButtonText}>
+                {showForm ? 'Cancelar' : 'Adicionar tarefa'}
+              </Text>
+            </Pressable>
+            {/* Formulário para adicionar ou editar uma tarefa */}
+            {showForm && (
+              <View>
+                <Text style={styles.formTitle}>
+                  {editingTaskId ? 'Editar tarefa' : 'Nova tarefa'}
+                </Text>
+                <TextInput
+                  style={styles.taskInput}
+                  placeholder="Digite o nome da nova tarefa"
+                  value={newTaskName}
+                  onChangeText={setNewTaskName}
+                />
+                <TextInput
+                  style={styles.taskInput}
+                  placeholder="Matéria"
+                  value={newTaskSubject}
+                  onChangeText={setNewTaskSubject}
+                />
+                <View style={styles.dateOptions}>
                   <Pressable
-                    key={dayDate}
-                    style={styles.calendarDayCell}
-                    onPress={() => {
-                      setNewTaskDate(dayDate);
-                      setFormError('');
-                    }}
+                    style={[
+                      styles.dateOption,
+                      newTaskDate === 'Hoje' && styles.dateOptionSelected,
+                    ]}
+                    onPress={() => setNewTaskDate('Hoje')}
                   >
-                    <View
+                    <Text
                       style={[
-                        styles.calendarDayButton,
-                        isSelected && styles.calendarDayButtonSelected,
+                        styles.dateOptionText,
+                        newTaskDate === 'Hoje' && styles.dateOptionTextSelected,
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.calendarDayText,
-                          isOutsideMonth && styles.calendarDayTextOutside,
-                          isSelected && styles.calendarDayTextSelected,
-                        ]}
-                      >
-                        {day.getDate()}
-                      </Text>
-                    </View>
+                      Hoje
+                    </Text>
                   </Pressable>
-                );
-              })}
-            </View>
-          </View>
-          {formError !== '' && (
-            <Text style={styles.formErrorText}>{formError}</Text>
-          )}
-          {/* Salva ou atualiza a tarefa */}
-          <Pressable style={styles.formButton} onPress={handleAddTask}>
-            <Text style={styles.formButtonText}>
-              {editingTaskId ? 'Atualizar tarefa' : 'Salvar tarefa'}
-            </Text>
-          </Pressable>
-        </View>
-      )}
+                  <Pressable
+                    style={[
+                      styles.dateOption,
+                      newTaskDate === 'Amanhã' && styles.dateOptionSelected,
+                    ]}
+                    onPress={() => setNewTaskDate('Amanhã')}
+                  >
+                    <Text
+                      style={[
+                        styles.dateOptionText,
+                        newTaskDate === 'Amanhã' && styles.dateOptionTextSelected,
+                      ]}
+                    >
+                      Amanhã
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={styles.calendar}>
+                  <View style={styles.calendarHeader}>
+                    <Pressable
+                      style={styles.calendarNavButton}
+                      onPress={() =>
+                        setCalendarMonth(
+                          new Date(calendarYear, calendarMonthIndex - 1, 1)
+                        )
+                      }
+                    >
+                      <Text style={styles.calendarNavText}>‹</Text>
+                    </Pressable>
+                    <Text style={styles.calendarMonthText}>
+                      {calendarMonth.toLocaleDateString('pt-BR', {
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                    <Pressable
+                      style={styles.calendarNavButton}
+                      onPress={() =>
+                        setCalendarMonth(
+                          new Date(calendarYear, calendarMonthIndex + 1, 1)
+                        )
+                      }
+                    >
+                      <Text style={styles.calendarNavText}>›</Text>
+                    </Pressable>
+                  </View>
+                  <View style={styles.calendarWeekRow}>
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                      <Text key={day} style={styles.calendarWeekDay}>
+                        {day}
+                      </Text>
+                    ))}
+                  </View>
+                  <View style={styles.calendarGrid}>
+                    {calendarDays.map((day) => {
+                      const dayDate = formatTaskDate(day);
+                      const isSelected = newTaskDate === dayDate;
+                      const isOutsideMonth = day.getMonth() !== calendarMonthIndex;
 
-      {/* Filtros das tarefas */}
-      <View style={styles.filterRow}>
-        <Pressable
-          style={[
-            styles.filterButton,
-            taskFilter === 'all' && styles.filterButtonActive,
-          ]}
-          onPress={() => setTaskFilter('all')}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              taskFilter === 'all' && styles.filterButtonTextActive,
-            ]}
-          >
-            Todas
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[
-            styles.filterButton,
-            taskFilter === 'pending' && styles.filterButtonActive,
-          ]}
-          onPress={() => setTaskFilter('pending')}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              taskFilter === 'pending' && styles.filterButtonTextActive,
-            ]}
-          >
-            Pendentes
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[
-            styles.filterButton,
-            taskFilter === 'completed' && styles.filterButtonActive,
-          ]}
-          onPress={() => setTaskFilter('completed')}
-        >
-          <Text
-            style={[
-              styles.filterButtonText,
-              taskFilter === 'completed' && styles.filterButtonTextActive,
-            ]}
-          >
-            Concluídas
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Lista de tarefas */}
-      {filteredTasks.map((task) => (
-        <View key={task.id} style={styles.taskCard}>
-          <Pressable
-            style={[
-              styles.taskCheck,
-              task.completed && styles.taskCheckCompleted,
-            ]}
-            onPress={() => {
-              setTaskList((currentTasks) =>
-                currentTasks.map((item) =>
-                  item.id === task.id
-                    ? { ...item, completed: !item.completed }
-                    : item
-                )
-              );
-            }}
-          >
-            {task.completed && (
-              <Text style={styles.taskCheckText}>✓</Text>
+                      return (
+                        <Pressable
+                          key={dayDate}
+                          style={styles.calendarDayCell}
+                          onPress={() => {
+                            setNewTaskDate(dayDate);
+                            setFormError('');
+                          }}
+                        >
+                          <View
+                            style={[
+                              styles.calendarDayButton,
+                              isSelected && styles.calendarDayButtonSelected,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.calendarDayText,
+                                isOutsideMonth && styles.calendarDayTextOutside,
+                                isSelected && styles.calendarDayTextSelected,
+                              ]}
+                            >
+                              {day.getDate()}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+                {formError !== '' && (
+                  <Text style={styles.formErrorText}>{formError}</Text>
+                )}
+                {/* Salva ou atualiza a tarefa */}
+                <Pressable style={styles.formButton} onPress={handleAddTask}>
+                  <Text style={styles.formButtonText}>
+                    {editingTaskId ? 'Atualizar tarefa' : 'Salvar tarefa'}
+                  </Text>
+                </Pressable>
+              </View>
             )}
-          </Pressable>
-          <View style={styles.taskInfo}>
-            <Text
-              style={[
-                styles.taskName,
-                task.completed && styles.taskNameCompleted,
-              ]}
-            >
-              {task.name}
-            </Text>
-            <Text style={styles.taskMeta}>
-              {task.subject} - {task.date}
-            </Text>
-            <View style={styles.taskActions}>
+
+            {/* Filtros das tarefas */}
+            <View style={styles.filterRow}>
               <Pressable
-                style={styles.editButton}
-                onPress={() => handleEditTask(task)}
+                style={[
+                  styles.filterButton,
+                  taskFilter === 'all' && styles.filterButtonActive,
+                ]}
+                onPress={() => setTaskFilter('all')}
               >
-                <Text style={styles.editButtonText}>Editar</Text>
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    taskFilter === 'all' && styles.filterButtonTextActive,
+                  ]}
+                >
+                  Todas
+                </Text>
               </Pressable>
+
               <Pressable
-                style={styles.deleteButton}
-                onPress={() => handleDeleteTask(task.id)}
+                style={[
+                  styles.filterButton,
+                  taskFilter === 'pending' && styles.filterButtonActive,
+                ]}
+                onPress={() => setTaskFilter('pending')}
               >
-                <Text style={styles.deleteButtonText}>Excluir</Text>
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    taskFilter === 'pending' && styles.filterButtonTextActive,
+                  ]}
+                >
+                  Pendentes
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.filterButton,
+                  taskFilter === 'completed' && styles.filterButtonActive,
+                ]}
+                onPress={() => setTaskFilter('completed')}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    taskFilter === 'completed' && styles.filterButtonTextActive,
+                  ]}
+                >
+                  Concluídas
+                </Text>
               </Pressable>
             </View>
+
+            {/* Lista de tarefas */}
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
+                <View key={task.id} style={styles.taskCard}>
+                  <Pressable
+                    style={[
+                      styles.taskCheck,
+                      task.completed && styles.taskCheckCompleted,
+                    ]}
+                    onPress={() => {
+                      setTaskList((currentTasks) =>
+                        currentTasks.map((item) =>
+                          item.id === task.id
+                            ? { ...item, completed: !item.completed }
+                            : item
+                        )
+                      );
+                    }}
+                  >
+                    {task.completed && (
+                      <Text style={styles.taskCheckText}>✓</Text>
+                    )}
+                  </Pressable>
+                  <View style={styles.taskInfo}>
+                    <Text
+                      style={[
+                        styles.taskName,
+                        task.completed && styles.taskNameCompleted,
+                      ]}
+                    >
+                      {task.name}
+                    </Text>
+                    <Text style={styles.taskMeta}>
+                      {task.subject} - {task.date}
+                    </Text>
+                    <View style={styles.taskActions}>
+                      <Pressable
+                        style={styles.editButton}
+                        onPress={() => handleEditTask(task)}
+                      >
+                        <Text style={styles.editButtonText}>Editar</Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteTask(task.id)}
+                      >
+                        <Text style={styles.deleteButtonText}>Excluir</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateTitle}>
+                  {taskFilter === 'completed'
+                    ? 'Nenhuma tarefa concluída ainda'
+                    : taskFilter === 'pending'
+                      ? 'Nenhuma tarefa pendente'
+                      : 'Nenhuma tarefa cadastrada'}
+                </Text>
+                <Text style={styles.emptyStateText}>
+                  Adicione uma tarefa para começar.
+                </Text>
+              </View>
+            )}
+
+            {/* Define a aparência da barra de status do sistema */}
+            <StatusBar style="auto" />
           </View>
         </View>
-      ))}
-
-      {/* Define a aparência da barra de status do sistema */}
-      <StatusBar style="auto" />
+      </View>
     </ScrollView>
   );
 }
 
 // Guarda os estilos usados pelos elementos acima
 const styles = StyleSheet.create({
+  pageContent: {
+    width: '100%',
+    maxWidth: 1180,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  eyebrow: {
+    color: '#466C52',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginBottom: 6,
+  },
+  subtitle: {
+    color: '#777A72',
+    fontSize: 14,
+    marginTop: 6,
+  },
+  metricsRow: {
+    width: '100%',
+    gap: 16,
+    marginBottom: 4,
+  },
+  metricsRowWide: {
+    flexDirection: 'row',
+  },
+  metricCard: {
+    width: '100%',
+    minHeight: 104,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DCE4DC',
+    borderRadius: 16,
+    padding: 18,
+    justifyContent: 'center',
+  },
+  metricCardWide: {
+    flex: 1,
+    minWidth: 0,
+  },
+  metricLabel: {
+    color: '#777A72',
+    fontSize: 13,
+  },
+  metricValue: {
+    color: '#20221F',
+    fontSize: 26,
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  metricHint: {
+    color: '#777A72',
+    fontSize: 11,
+    marginTop: 3,
+  },
+  dashboardGrid: {
+    width: '100%',
+    gap: 24,
+  },
+  dashboardGridWide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  subjectsColumn: {
+    width: '100%',
+  },
+  subjectsColumnWide: {
+    flex: 1,
+    minWidth: 0,
+  },
+  tasksColumn: {
+    width: '100%',
+  },
+  tasksColumnWide: {
+    flex: 2,
+    minWidth: 0,
+  },
   // Aparência do título principal
   title: {
     color: '#20221F',
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 20,
+    marginBottom: 4,
   },
   // Aparência da caixa de resumo
   summaryCard: {
-    width: '90%',
-    maxWidth: 520,
+    width: '100%',
     backgroundColor: '#466C52',
     borderRadius: 16,
     padding: 20,
@@ -466,13 +606,45 @@ const styles = StyleSheet.create({
     marginTop: 28,
     marginBottom: 12,
   },
-  // Aparência do cartão de cada matéria
-  subjectCard: {
-    width: '90%',
-    maxWidth: 520,
+  // Título que indica se o formulário está criando ou editando
+  formTitle: {
+    width: '100%',
+    color: '#20221F',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  // Mensagem exibida quando uma lista ainda não tem itens
+  emptyState: {
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DCE4DC',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  emptyStateTitle: {
+    color: '#20221F',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    color: '#777A72',
+    fontSize: 14,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  // Aparência do cartão de cada matéria
+  subjectCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DCE4DC',
+    borderLeftWidth: 4,
+    borderLeftColor: '#466C52',
     borderRadius: 16,
     padding: 16,
     marginBottom: 10,
@@ -491,19 +663,19 @@ const styles = StyleSheet.create({
   },
   // Aparência dos campos de texto do formulário
   taskInput: {
-    width: '90%',
-    maxWidth: 520,
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#D8DDD8',
+    minHeight: 48,
+    fontSize: 16,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
   },
   // Organiza as opções de data lado a lado
   dateOptions: {
-    width: '90%',
-    maxWidth: 520,
+    width: '100%',
     flexDirection: 'row',
     marginBottom: 10,
   },
@@ -535,6 +707,8 @@ const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 360,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DCE4DC',
     borderRadius: 16,
     padding: 10,
     marginBottom: 10,
@@ -609,8 +783,7 @@ const styles = StyleSheet.create({
   // Aparência dos botões do formulário
   formButton: {
     backgroundColor: '#466C52',
-    width: '90%',
-    maxWidth: 520,
+    width: '100%',
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
@@ -623,14 +796,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   formErrorText: {
-    color: '#FF0000',
+    color: '#B42318',
     fontSize: 14,
     marginBottom: 10,
   },
   // Organiza os botões de filtro em uma linha
   filterRow: {
-    width: '90%',
-    maxWidth: 520,
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
@@ -692,11 +864,12 @@ const styles = StyleSheet.create({
 
   // Aparência da caixa de tarefa
   taskCard: {
-    width: '90%',
-    maxWidth: 520,
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DCE4DC',
+    borderLeftWidth: 4,
+    borderLeftColor: '#466C52',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -749,8 +922,9 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: '#F5F7F4',
-    paddingTop: 40,
+    paddingTop: 32,
     paddingBottom: 32,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
